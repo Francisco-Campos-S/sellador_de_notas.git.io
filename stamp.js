@@ -154,10 +154,10 @@
         }
       }
 
-      // Cargar imagen de firma del director si existe (firmadirector.png)
+      // Cargar imagen de firma de director(a) si existe (firmadirector.png)
       let firmImageEmbedded = null;
       try{
-        setStatus('Buscando firma del director: firmadirector.png');
+        setStatus('Buscando firma de director(a): firmadirector.png');
         const respF = await fetch('./firmadirector.png');
         if(respF && respF.ok){
           const arrF = await respF.arrayBuffer();
@@ -258,7 +258,7 @@
               if(ySig + drawHeightSig > height - 8){ ySig = Math.max(8, height - 8 - drawHeightSig); }
               console.log('Posición firma (col) x=', xSig, 'y=', ySig, 'w=', drawWidthSig, 'h=', drawHeightSig, 'colCenter=', colCenterX);
               page.drawImage(firmImageEmbedded, { x: xSig, y: ySig, width: drawWidthSig, height: drawHeightSig });
-            }catch(e){ console.warn('Error dibujando firma del director', e); }
+            }catch(e){ console.warn('Error dibujando firma de director(a)', e); }
           }
 
           console.log('Posición sello (corner) x=', x, 'y=', y, 'drawWidth=', drawWidth, 'drawHeight=', drawHeight);
@@ -293,7 +293,7 @@
         }
       }
 
-      setStatus('Generating PDF...');
+      // status message suppressed per user request
       const newPdfBytes = await pdfDoc.save();
       // Descargar
       const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
@@ -307,7 +307,6 @@
       const previewFrame = document.getElementById('previewFrame');
       const pdfPreview = document.getElementById('pdfPreview');
       const downloadLink = document.getElementById('downloadLink');
-      const clearBtn = document.getElementById('clearPreview');
       if(previewFrame && pdfPreview){
         try{
           previewFrame.src = url;
@@ -315,16 +314,10 @@
           downloadLink.download = baseName + '_sellado.pdf';
           downloadLink.style.display = 'inline-block';
           pdfPreview.style.display = 'block';
-          setStatus('Listo — PDF generado y mostrado en vista previa.');
 
           console.log('Preview URL asignada al iframe:', url);
 
-          // Cerrar vista previa libera el object URL
-          clearBtn.onclick = ()=>{
-            previewFrame.src = '';
-            pdfPreview.style.display = 'none';
-            if(currentPreviewUrl){ try{ URL.revokeObjectURL(currentPreviewUrl); console.log('Object URL revocado'); }catch(e){ console.warn('No se pudo revocar URL', e); } currentPreviewUrl = null; }
-          };
+          // No hay botón "Cerrar vista"; dejamos la vista previa abierta.
         }catch(err){
           console.error('Error mostrando preview en iframe:', err);
           // Fallback: abrir en nueva pestaña

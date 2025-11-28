@@ -26,7 +26,7 @@
     <section class="card">
       <div class="card-body">
         <h1 class="title">Sellador de PDFs</h1>
-        <p class="lead">Sube un PDF y descarga la versión con el sello oficial aplicado en la esquina inferior derecha de cada página. La operación se ejecuta en tu navegador; no se envía nada a servidores externos.</p>
+        <p class="lead">Sube un PDF y el sello y la firma de director(a) se aplicarán automáticamente al cargarlo; la versión sellada y firmada se mostrará en la vista previa para descargar o imprimir.</p>
 
         <form id="stampForm" class="form">
           <label class="file-input">
@@ -46,7 +46,6 @@
             <strong>Vista previa del PDF sellado</strong>
             <div class="preview-actions">
               <a id="downloadLink" class="btn-link" href="#" download style="display:none">Descargar</a>
-              <button id="clearPreview" class="btn-link" type="button">Cerrar vista</button>
             </div>
           </div>
           <iframe id="previewFrame" class="preview-iframe" src="" frameborder="0"></iframe>
