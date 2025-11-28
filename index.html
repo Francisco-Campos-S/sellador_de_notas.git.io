@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sellador de PDFs — Esquina Inferior Derecha</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Sellador de PDFs</h1>
+    <p>Sube un PDF y obtén el PDF con el sello oficial aplicado en la esquina inferior derecha (última página).</p>
+
+    <label class="file-input">
+      PDF a sellar
+      <input id="pdfFile" type="file" accept="application/pdf">
+    </label>
+
+    <button id="stampBtn">Sellar y descargar PDF</button>
+
+    <div id="status" class="status"></div>
+    <div id="previewContainer" class="preview">
+      <div class="preview-label">Sello (vista previa):</div>
+      <img id="previewStamp" src="./SELLO.jpeg" alt="Sello" style="display:none; max-width:140px; border:1px solid #ccc; padding:6px; background:#fff;">
+      <div id="previewMsg" style="font-size:12px;color:#888;margin-top:6px"></div>
+    </div>
+    <footer>Generado en el navegador; no se sube nada a servidor. Diseñado para GitHub Pages.</footer>
+  </main>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="stamp.js"></script>
+</body>
+</html>
