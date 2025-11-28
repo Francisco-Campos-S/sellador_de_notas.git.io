@@ -156,6 +156,39 @@
         }
       }
 
+      // Cargar imagen de firma del director si existe (firmadirector.png)
+      let firmImageEmbedded = null;
+      try{
+        setStatus('Buscando firma del director: firmadirector.png');
+        const respF = await fetch('./firmadirector.png');
+        if(respF && respF.ok){
+          const arrF = await respF.arrayBuffer();
+          try{ firmImageEmbedded = await pdfDoc.embedPng(arrF); console.log('firmadirector.png embebido como PNG'); }
+          catch(e){ console.warn('No se pudo embeber firmadirector.png como PNG', e); firmImageEmbedded = null; }
+        } else {
+          console.debug('firmadirector.png no disponible via fetch');
+        }
+      }catch(err){ console.debug('Error comprobando firmadirector.png', err); }
+
+      // Si no se embebió vía fetch, intentar como <img> fallback
+      if(!firmImageEmbedded){
+        try{
+          const imgF = document.createElement('img');
+          imgF.src = './firmadirector.png';
+          await new Promise((res, rej)=>{ imgF.onload = res; imgF.onerror = rej; });
+          const canvasF = document.createElement('canvas');
+          canvasF.width = imgF.naturalWidth || 800;
+          canvasF.height = imgF.naturalHeight || 400;
+          const ctxF = canvasF.getContext('2d');
+          ctxF.clearRect(0,0,canvasF.width,canvasF.height);
+          ctxF.drawImage(imgF,0,0);
+          const dataURLF = canvasF.toDataURL('image/png');
+          const bytesF = dataURLToUint8Array(dataURLF);
+          firmImageEmbedded = await pdfDoc.embedPng(bytesF);
+          console.log('Embebido firma via canvas fallback');
+        }catch(err){ console.debug('No se pudo cargar firmadirector.png via img fallback', err); firmImageEmbedded = null; }
+      }
+
       if(!stampImageEmbedded){
         setStatus('No se encontró SELLO.* en la raíz; se usará texto como reserva');
         if(previewMsg) previewMsg.textContent = 'SELLO.* no encontrado';
@@ -200,6 +233,36 @@
           if(x < 8) x = 8;
           // Bajar ligeramente el sello: restamos `extraDownShift` al margen inferior
           let y = Math.max(8, defaultMarginBottom - extraDownShift);
+          // Si hay imagen de firma, dibujarla a la izquierda del sello (ajustando separación)
+          if(firmImageEmbedded){
+            try{
+              // Colocar la firma centrada en la columna "Nombre y firma de director(a)".
+              // Ajustable: fraction del ancho donde se centra la columna (0..1)
+              // Aumentado para la columna correcta; use `signatureColumnOffsetPx` para afinaciones finas
+              const signatureColumnFraction = 0.72; // ajustar si hace falta (ej. 0.70-0.78)
+              // Mover la firma 1 cm a la izquierda: convertir cm a puntos (pt) y usar negativo
+              const signatureColumnOffsetPx = -Math.round(1 * 72 / 2.54); // -1 cm en puntos (~ -28)
+              const sigFraction = 0.18; // fracción del ancho para la firma
+              const maxSigPx = 220;
+              let drawWidthSig = Math.min(maxSigPx, Math.floor(width * sigFraction));
+              const sigImgW = firmImageEmbedded.width;
+              const sigImgH = firmImageEmbedded.height;
+              let scaleSig = drawWidthSig / sigImgW;
+              let drawHeightSig = sigImgH * scaleSig;
+              // Centro de la columna donde colocar la firma
+              let colCenterX = Math.floor(width * signatureColumnFraction) + signatureColumnOffsetPx;
+              let xSig = colCenterX - Math.floor(drawWidthSig/2);
+              if(xSig < 8) xSig = 8;
+              if(xSig + drawWidthSig > width - 8) xSig = Math.max(8, width - 8 - drawWidthSig);
+              // Alineamos verticalmente con el sello (misma y)
+              let ySig = y;
+              // Evitar que la firma sobresalga por arriba/abajo
+              if(ySig + drawHeightSig > height - 8){ ySig = Math.max(8, height - 8 - drawHeightSig); }
+              console.log('Posición firma (col) x=', xSig, 'y=', ySig, 'w=', drawWidthSig, 'h=', drawHeightSig, 'colCenter=', colCenterX);
+              page.drawImage(firmImageEmbedded, { x: xSig, y: ySig, width: drawWidthSig, height: drawHeightSig });
+            }catch(e){ console.warn('Error dibujando firma del director', e); }
+          }
+
           console.log('Posición sello (corner) x=', x, 'y=', y, 'drawWidth=', drawWidth, 'drawHeight=', drawHeight);
           page.drawImage(stampImageEmbedded, { x, y, width: drawWidth, height: drawHeight });
         } else {
@@ -212,6 +275,22 @@
           let tx = width - textWidth - defaultMarginRight - extraLeftShift;
           let ty = Math.max(8, defaultMarginBottom - extraDownShift);
           if(tx < 8) tx = 8;
+          // Si tenemos firma, dibujarla también cuando no exista sello principal
+          if(firmImageEmbedded){
+            try{
+              const sigFraction = 0.18; const maxSigPx = 220;
+              let drawWidthSig = Math.min(maxSigPx, Math.floor(width * sigFraction));
+              const sigImgW = firmImageEmbedded.width;
+              const sigImgH = firmImageEmbedded.height;
+              let scaleSig = drawWidthSig / sigImgW;
+              let drawHeightSig = sigImgH * scaleSig;
+              // colocarla a la izquierda cerca de la esquina derecha
+              let xSig = width - drawWidthSig - defaultMarginRight - extraLeftShift - 12;
+              if(xSig < 8) xSig = 8;
+              let ySig = ty;
+              page.drawImage(firmImageEmbedded, { x: xSig, y: ySig, width: drawWidthSig, height: drawHeightSig });
+            }catch(e){ console.warn('Error dibujando firma en fallback de texto', e); }
+          }
           page.drawText(stampText, { x: tx, y: ty, size: fontSize, font, color: rgb(0,0,0) });
         }
       }
