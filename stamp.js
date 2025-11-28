@@ -55,6 +55,26 @@
     });
   }
 
+  // Botón Limpiar: limpia input, revoca preview y oculta elementos relacionados
+  if(clearBtn){
+    clearBtn.addEventListener('click', ()=>{
+      try{
+        // Limpiar input de archivo
+        if(pdfFileEl){ pdfFileEl.value = ''; }
+        // Quitar preview
+        if(previewFrame){ previewFrame.src = ''; }
+        if(pdfPreview){ pdfPreview.style.display = 'none'; }
+        // Ocultar enlace de descarga
+        if(downloadLink){ downloadLink.href = '#'; downloadLink.style.display = 'none'; }
+        // Revocar URL si existe
+        if(currentPreviewUrl){ try{ URL.revokeObjectURL(currentPreviewUrl); }catch(e){ console.warn('No se pudo revocar URL', e); } currentPreviewUrl = null; }
+        // Limpiar estado
+        setStatus('');
+        if(pdfFileEl){ pdfFileEl.focus(); }
+      }catch(err){ console.error('Error limpiando vista/preview', err); }
+    });
+  }
+
   async function readFileAsArrayBuffer(file){
     return await new Promise((res, rej)=>{
       const fr = new FileReader();
