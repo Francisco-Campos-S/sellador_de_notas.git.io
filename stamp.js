@@ -108,6 +108,9 @@
       // Desplazamiento horizontal adicional: mover el sello hacia la IZQUIERDA 0.5 cm
       const extraLeftShiftCm = 0.5; // centímetros
       const extraLeftShift = Math.round(extraLeftShiftCm * 72 / 2.54); // convertir cm -> puntos
+      // Desplazamiento vertical para la firma: subir 1 cm desde la posición calculada
+      const signatureUpShiftCm = 1; // centímetros
+      const signatureUpShift = Math.round(signatureUpShiftCm * 72 / 2.54); // convertir cm -> puntos
       const sizeFraction = 0.13; // 13% del ancho de la página por defecto (tamaño reducido)
       const maxSizePx = 320;
 
@@ -273,7 +276,8 @@
               if(xSig < 8) xSig = 8;
               if(xSig + drawWidthSig > width - 8) xSig = Math.max(8, width - 8 - drawWidthSig);
               // Alineamos verticalmente con el sello (misma y)
-              let ySig = y;
+              // Subir la firma `signatureUpShift` puntos (1 cm) respecto a la posición base `y`
+              let ySig = y + signatureUpShift;
               // Evitar que la firma sobresalga por arriba/abajo
               if(ySig + drawHeightSig > height - 8){ ySig = Math.max(8, height - 8 - drawHeightSig); }
               console.log('Posición firma (col) x=', xSig, 'y=', ySig, 'w=', drawWidthSig, 'h=', drawHeightSig, 'colCenter=', colCenterX);
@@ -305,7 +309,8 @@
               // colocarla a la izquierda cerca de la esquina derecha
               let xSig = width - drawWidthSig - defaultMarginRight - extraLeftShift - 12;
               if(xSig < 8) xSig = 8;
-              let ySig = ty;
+              // Mismo ajuste vertical para el fallback de texto: subir 1 cm
+              let ySig = ty + signatureUpShift;
               page.drawImage(firmImageEmbedded, { x: xSig, y: ySig, width: drawWidthSig, height: drawHeightSig });
             }catch(e){ console.warn('Error dibujando firma en fallback de texto', e); }
           }

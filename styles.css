@@ -34,7 +34,28 @@ body{margin:0;background:linear-gradient(180deg,var(--green-700),var(--green-900
 .form{display:block}
 .file-input{display:block;margin:12px 0}
 .file-label{display:block;font-weight:700;color:#0b3b1e;margin-bottom:8px}
-input[type=file]{display:block;padding:12px;border-radius:10px;border:1px solid #e6e7eb;background:var(--surface)}
+/* Style the native file input button to match the green theme */
+input[type=file]{display:inline-block;padding:6px 12px;border-radius:12px;border:0;background:transparent;color:var(--muted-dark);cursor:pointer}
+input[type=file]::-webkit-file-upload-button{
+	background:linear-gradient(180deg,#d1fae5,#86efac);
+	color:#04402c;
+	border:none;
+	padding:12px 20px;
+	border-radius:12px;
+	font-weight:800;
+	font-size:16px;
+	cursor:pointer;
+}
+input[type=file]::file-selector-button{
+	background:linear-gradient(180deg,#d1fae5,#86efac);
+	color:#04402c;
+	border:none;
+	padding:12px 20px;
+	border-radius:12px;
+	font-weight:800;
+	font-size:16px;
+	cursor:pointer;
+}
 
 .actions{margin-top:16px}
 .btn-primary{display:inline-flex;align-items:center;gap:14px;background:linear-gradient(180deg,#d1fae5,#86efac);color:#04402c;border:0;padding:16px 34px;border-radius:16px;cursor:pointer;font-weight:800;font-size:18px;box-shadow:0 16px 40px rgba(16,185,129,0.10);transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease}
@@ -50,6 +71,15 @@ input[type=file]{display:block;padding:12px;border-radius:10px;border:1px solid 
 .secondary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(2,6,23,0.06)}
 .secondary:active{transform:translateY(0) scale(.998)}
 .secondary:focus{outline:none;box-shadow:0 0 0 8px rgba(16,185,129,0.08)}
+
+/* Specific tones for Print (blue) and Clear (light red) buttons */
+#printBtn.secondary{background:linear-gradient(180deg,#dbeafe,#93c5fd);color:#07316a;border:1px solid rgba(14,64,120,0.08)}
+#printBtn.secondary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(14,64,120,0.08)}
+#printBtn.secondary:focus{box-shadow:0 0 0 8px rgba(59,130,246,0.12)}
+
+#clearPreview.secondary{background:linear-gradient(180deg,#fee2e2,#fecaca);color:#7f1d1d;border:1px solid rgba(127,29,29,0.08)}
+#clearPreview.secondary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(127,29,29,0.06)}
+#clearPreview.secondary:focus{box-shadow:0 0 0 8px rgba(239,68,68,0.10)}
 
 @media (max-width:600px){
 	.brand-title{font-size:13px}
