@@ -8,8 +8,54 @@
   const statusEl = document.getElementById('status');
   const previewImg = document.getElementById('previewStamp');
   const previewMsg = document.getElementById('previewMsg');
+  const previewFrame = document.getElementById('previewFrame');
+  const pdfPreview = document.getElementById('pdfPreview');
+  const downloadLink = document.getElementById('downloadLink');
+  const clearBtn = document.getElementById('clearPreview');
+  const printBtn = document.getElementById('printBtn');
+  let currentPreviewUrl = null;
 
   function setStatus(msg){ statusEl.textContent = msg; }
+
+  // Inicial: deshabilitar botón hasta seleccionar archivo
+  if(stampBtn) stampBtn.disabled = true;
+
+  // Cuando el usuario selecciona archivo, mostrar nombre y habilitar botón
+  if(pdfFileEl){
+    pdfFileEl.addEventListener('change', (e)=>{
+      try{
+        const f = e.target.files && e.target.files[0];
+        if(f){
+          setStatus(`Archivo seleccionado: ${f.name}`);
+          if(stampBtn) stampBtn.disabled = false;
+        } else {
+          setStatus('Ningún archivo seleccionado');
+          if(stampBtn) stampBtn.disabled = true;
+        }
+      }catch(err){ console.error('Error en change handler del input file', err); }
+    });
+  }
+
+  // Acción de imprimir: si hay vista previa, imprimir desde el iframe
+  if(printBtn){
+    printBtn.addEventListener('click', ()=>{
+      try{
+        if(previewFrame && previewFrame.src){
+          try{
+            previewFrame.contentWindow.focus();
+            previewFrame.contentWindow.print();
+            setStatus('Enviando a imprimir...');
+          }catch(err){
+            console.warn('No se pudo imprimir desde iframe, abriendo en nueva pestaña', err);
+            window.open(previewFrame.src, '_blank');
+            setStatus('Se abrió el PDF en otra pestaña para impresión.');
+          }
+        } else {
+          setStatus('No hay PDF para imprimir. Primero haz "Sellar".');
+        }
+      }catch(e){ console.error('Error en print handler', e); setStatus('Error al intentar imprimir.'); }
+    });
+  }
 
   async function readFileAsArrayBuffer(file){
     return await new Promise((res, rej)=>{
@@ -27,6 +73,7 @@
       if(!pdfFile){ setStatus('Selecciona un PDF primero.'); return; }
 
       const pdfBytes = await readFileAsArrayBuffer(pdfFile);
+      console.log('PDF leído en bytes, tamaño:', pdfBytes && pdfBytes.byteLength);
       const pdfDoc = await PDFDocument.load(pdfBytes);
       // Opciones por defecto: usar sello incluido `SELLO.jpeg`, aplicar a la última página,
       // tamaño relativo y márgenes fijos.
@@ -173,16 +220,45 @@
       const newPdfBytes = await pdfDoc.save();
       // Descargar
       const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+      // Revocar preview anterior si existe
+      if(currentPreviewUrl){ try{ URL.revokeObjectURL(currentPreviewUrl); }catch(e){} currentPreviewUrl = null; }
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
+      currentPreviewUrl = url;
       const baseName = pdfFile.name.replace(/\.pdf$/i,'') || 'sellado';
-      a.download = baseName + '_sellado.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      setStatus('Listo — PDF descargado.');
+
+      // Mostrar vista previa en la página (iframe)
+      const previewFrame = document.getElementById('previewFrame');
+      const pdfPreview = document.getElementById('pdfPreview');
+      const downloadLink = document.getElementById('downloadLink');
+      const clearBtn = document.getElementById('clearPreview');
+      if(previewFrame && pdfPreview){
+        try{
+          previewFrame.src = url;
+          downloadLink.href = url;
+          downloadLink.download = baseName + '_sellado.pdf';
+          downloadLink.style.display = 'inline-block';
+          pdfPreview.style.display = 'block';
+          setStatus('Listo — PDF descargado y mostrado en vista previa.');
+
+          console.log('Preview URL asignada al iframe:', url);
+
+          // Cerrar vista previa libera el object URL
+          clearBtn.onclick = ()=>{
+            previewFrame.src = '';
+            pdfPreview.style.display = 'none';
+            if(currentPreviewUrl){ try{ URL.revokeObjectURL(currentPreviewUrl); console.log('Object URL revocado'); }catch(e){ console.warn('No se pudo revocar URL', e); } currentPreviewUrl = null; }
+          };
+        }catch(err){
+          console.error('Error mostrando preview en iframe:', err);
+          // Fallback: abrir en nueva pestaña
+          try{ window.open(url, '_blank'); setStatus('Preview abierto en nueva pestaña.'); }
+          catch(e){ setStatus('PDF generado pero no se pudo mostrar en la página.'); }
+        }
+      } else {
+        // Si no hay contenedor de vista previa, revocar la URL (evitar leaks)
+        try{ URL.revokeObjectURL(url); }catch(e){}
+        setStatus('Listo — PDF descargado.');
+      }
     }catch(err){
       console.error(err);
       setStatus('Error: ' + (err.message||String(err)));

@@ -36,11 +36,24 @@
           </label>
 
           <div class="actions">
-            <button id="stampBtn" class="primary">Sellar y descargar PDF</button>
+            <button id="stampBtn" class="primary" type="button">Sellar</button>
+            <button id="printBtn" class="secondary" type="button">Imprimir</button>
           </div>
         </form>
 
         <div id="status" class="status" role="status" aria-live="polite"></div>
+
+        <div id="pdfPreview" class="pdf-preview" style="display:none">
+          <div class="preview-header">
+            <strong>Vista previa del PDF sellado</strong>
+            <div class="preview-actions">
+              <a id="downloadLink" class="btn-link" href="#" download style="display:none">Descargar</a>
+              <button id="clearPreview" class="btn-link" type="button">Cerrar vista</button>
+            </div>
+          </div>
+          <iframe id="previewFrame" class="preview-iframe" src="" frameborder="0"></iframe>
+        </div>
+
       </div>
     </section>
 
