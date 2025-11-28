@@ -14,23 +14,21 @@
   const clearBtn = document.getElementById('clearPreview');
   const printBtn = document.getElementById('printBtn');
   let currentPreviewUrl = null;
+  let isProcessing = false;
 
   function setStatus(msg){ statusEl.textContent = msg; }
 
-  // Inicial: deshabilitar botón hasta seleccionar archivo
-  if(stampBtn) stampBtn.disabled = true;
-
-  // Cuando el usuario selecciona archivo, mostrar nombre y habilitar botón
+  // Cuando el usuario selecciona archivo, iniciar sellado automáticamente
   if(pdfFileEl){
     pdfFileEl.addEventListener('change', (e)=>{
       try{
         const f = e.target.files && e.target.files[0];
         if(f){
-          setStatus(`Archivo seleccionado: ${f.name}`);
-          if(stampBtn) stampBtn.disabled = false;
+          setStatus(`Archivo seleccionado: ${f.name} — sellando automáticamente...`);
+          // Llamada automática al proceso de sellado
+          processSelectedFile(f).catch(err=>console.error('Error en sellado automático', err));
         } else {
           setStatus('Ningún archivo seleccionado');
-          if(stampBtn) stampBtn.disabled = true;
         }
       }catch(err){ console.error('Error en change handler del input file', err); }
     });
@@ -65,13 +63,13 @@
       fr.readAsArrayBuffer(file);
     });
   }
-
-  stampBtn.addEventListener('click', async ()=>{
+  // Procesa un archivo PDF ya seleccionado: aplica sello/firma y muestra vista previa
+  async function processSelectedFile(pdfFile){
+    if(!pdfFile) { setStatus('No hay archivo para procesar'); return; }
+    if(isProcessing){ setStatus('Procesamiento en curso, espera...'); return; }
+    isProcessing = true;
     try{
       setStatus('Preparando...');
-      const pdfFile = pdfFileEl.files[0];
-      if(!pdfFile){ setStatus('Selecciona un PDF primero.'); return; }
-
       const pdfBytes = await readFileAsArrayBuffer(pdfFile);
       console.log('PDF leído en bytes, tamaño:', pdfBytes && pdfBytes.byteLength);
       const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -295,7 +293,7 @@
         }
       }
 
-      setStatus('Generando PDF...');
+      setStatus('Generating PDF...');
       const newPdfBytes = await pdfDoc.save();
       // Descargar
       const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
@@ -317,7 +315,7 @@
           downloadLink.download = baseName + '_sellado.pdf';
           downloadLink.style.display = 'inline-block';
           pdfPreview.style.display = 'block';
-          setStatus('Listo — PDF descargado y mostrado en vista previa.');
+          setStatus('Listo — PDF generado y mostrado en vista previa.');
 
           console.log('Preview URL asignada al iframe:', url);
 
@@ -341,6 +339,17 @@
     }catch(err){
       console.error(err);
       setStatus('Error: ' + (err.message||String(err)));
+    } finally {
+      isProcessing = false;
     }
-  });
+  }
+
+  // Si el botón de sellar existe (compatibilidad), mantener su comportamiento llamando a la función central
+  if(stampBtn){
+    stampBtn.addEventListener('click', async ()=>{
+      const pdfFile = pdfFileEl && pdfFileEl.files && pdfFileEl.files[0];
+      if(!pdfFile){ setStatus('Selecciona un PDF primero.'); return; }
+      await processSelectedFile(pdfFile);
+    });
+  }
 })();
